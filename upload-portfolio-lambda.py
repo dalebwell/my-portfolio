@@ -5,18 +5,17 @@ import zipfile
 import mimetypes
 
 def lambda_handler(event, context):
-    
     sns = boto3.resource('sns')
-    topic=sns.Topic('arn:aws:sns:us-east-1:545602794464:deployPortfolioTopic')
+    topic = sns.Topic('arn:aws:sns:us-east-1:545602794464:deployPortfolioTopic')
     
     location = {
-            "bucketName": 'portfoliobuild.solocollab.online',
-            "objectKey": 'portfoliobuild.zip'
+        "bucketName": 'portfoliobuild.rbportfolio.online',
+        "objectKey": 'portfoliobuild.zip'
     }
-
+   
     try:
         job = event.get("CodePipeline.job")
-        
+   
         if job:
             for artifact in job["data"]["inputArtifacts"]:
                 if artifact["name"] == "BuildArtifact":
@@ -25,7 +24,7 @@ def lambda_handler(event, context):
         print "Building portfolio from " + str(location)
         
         s3 = boto3.resource('s3')
-    
+                    
         portfolio_bucket = s3.Bucket('cloud.rbportfolio.online')
         build_bucket = s3.Bucket(location["bucketName"])
     
@@ -40,13 +39,12 @@ def lambda_handler(event, context):
                 portfolio_bucket.Object(nm).Acl().put(ACL='public-read')
         
         print "Job done"
-        topic.publish(Subject="Portfolio Update", Message="Portfolio Deployed Successfully")
-    
+        # topic.publish(Subject="Portfolio Update", Message="Portfolio Deployed Successfully")
         if job:
             codepipeline = boto3.client('codepipeline')
             codepipeline.put_job_success_result(jobId=job["id"])
-    except:
-         topic.publish(Subject="Portfolio Deploy Failed", Message="Portfolio Not Deployed Successfully")
-         raise
+    
 
-    return 'Hello From Lambda'
+    except:
+         # topic.publish(Subject="Portfolio Deploy Failed", Message="Portfolio Not Deployed Successfully")
+         raise
